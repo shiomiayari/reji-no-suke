@@ -1,0 +1,30 @@
+{
+  "name": "reji-no-suke",
+  "version": "1.0.0",
+  "description": "This is a new public repository created locally and on GitHub.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiomiayari/reji-no-suke.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/shiomiayari/reji-no-suke/issues"
+  },
+  "homepage": "https://github.com/shiomiayari/reji-no-suke#readme",
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
+  }
+}

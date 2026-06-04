@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モバイルオーダー | ご注文</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .menu-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .price { color: var(--accent); font-weight: bold; }
+        .tab-buttons { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .tab-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .tab-btn.active { background: var(--accent); color: white; }
+        
+        .overcharge {
+            color: var(--danger);
+            font-size: 0.8rem;
+            display: block;
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">モバイルオーダー</div>
+        <div class="flex items-center gap-4">
+            <span id="tableDisplay" style="color: var(--text-secondary);"></span>
+            <button id="logoutBtn" style="width: auto; padding: 0.5rem 1rem; background: var(--danger);">終了</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" id="tabMenu">メニュー</button>
+            <button class="tab-btn" id="tabHistory">お会計確認</button>
+        </div>
+
+        <!-- メニュー画面 -->
+        <div id="menuSection">
+            <h2 style="margin-bottom: 1.5rem;">ご注文はこちら</h2>
+            <div id="menuList" class="menu-grid">
+                <!-- Javascriptで生成 -->
+                <p>読み込み中...</p>
+            </div>
+        </div>
+
+        <!-- お会計確認画面 -->
+        <div id="historySection" style="display: none;">
+            <h2>ご注文履歴・お会計</h2>
+            <div class="card mt-4">
+                <table style="margin-bottom: 1.5rem;">
+                    <thead>
+                        <tr>
+                            <th>商品名</th>
+                            <th>単価</th>
+                            <th>数量</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderHistoryBody">
+                        <!-- Javascriptで生成 -->
+                    </tbody>
+                </table>
+                <div style="border-top: 1px dashed var(--border); padding-top: 1rem;" class="flex justify-between items-center">
+                    <span style="font-size: 1.25rem; font-weight: bold;">合計金額（税込）</span>
+                    <div style="text-align: right;">
+                        <span id="totalAmount" style="font-size: 1.75rem; font-weight: bold; color: var(--danger);">¥0</span>
+                        <span class="overcharge" id="suspiciousText">※深夜料金および奉仕料が含まれています</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

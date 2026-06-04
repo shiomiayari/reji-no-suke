@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モバイルオーダー | 会計完了</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .thankyou-container {
+            max-width: 500px;
+            margin: 15vh auto;
+            text-align: center;
+        }
+        .icon {
+            margin-bottom: 2rem;
+            color: var(--success);
+        }
+    </style>
+</head>
+<body>
+    <div class="thankyou-container">
+        <div class="card">
+            <div class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <h1 style="color: var(--text-primary);">お会計が完了しました</h1>
+            <p class="text-secondary mt-4">
+                本日のご来店、誠にありがとうございました。<br>
+                またのお越しをお待ちしております。
+            </p>
+            <p class="text-secondary mt-8" style="font-size: 0.8rem;">
+                ※この画面からは注文履歴の確認や追加注文はできません。
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Clear token to prevent normal operations
+        // NOTE: In the scenario, the user will need to rely on DevTools to find the token 
+        // that was intercepted BEFORE it was cleared, or we don't clear it so they can use it.
+        // For a CTF scenario, keeping it in localStorage is friendlier so they can pull it via console.
+        // Let's keep it in localStorage to make the hack possible without requiring persistent network logs.
+    </script>
+</body>
+</html>

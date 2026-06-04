@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モバイルオーダー | いらっしゃいませ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container" style="max-width: 400px; margin: 10vh auto;">
+        <div class="card text-center">
+            <h1 class="brand" style="margin-bottom: 0.5rem;">モバイルオーダー</h1>
+            <p class="text-secondary" style="margin-bottom: 2rem;">ご来店ありがとうございます</p>
+            
+            <div style="background: #2dd4bf; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <rect x="7" y="7" width="3" height="3"></rect>
+                    <rect x="14" y="7" width="3" height="3"></rect>
+                    <rect x="7" y="14" width="3" height="3"></rect>
+                    <rect x="14" y="14" width="3" height="3"></rect>
+                </svg>
+            </div>
+
+            <p style="margin-bottom: 1rem;">QRコードを読み取って注文を開始してください</p>
+
+            <form id="qrForm">
+                <div class="form-group text-left">
+                    <label for="qrData">（手動入力用）卓番号:</label>
+                    <input type="text" id="qrData" name="qrData" placeholder="例: table_3" required>
+                </div>
+                <div id="loginError" class="error-message"></div>
+                <button type="submit" class="mt-4">注文画面へ</button>
+            </form>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
