@@ -2,89 +2,203 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>モバイルオーダー | ご注文</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>レジの助 | ご注文</title>
+    
+    <!-- Stitch Design System (Tailwind & Fonts) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#f8f9fa",
+                        "on-background": "#191c1d",
+                        "surface": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "surface-variant": "#e1e3e4",
+                        "on-surface-variant": "#444748",
+                        "primary": "#5d5f5f",
+                        "on-primary": "#ffffff",
+                        "secondary": "#0058bb",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#1471e6",
+                        "on-secondary-container": "#fefcff",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "outline": "#747878",
+                        "outline-variant": "#c4c7c8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-container": "#edeeef",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-highest": "#e1e3e4"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+                        "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "label-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
         }
-        .menu-item {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        body {
+            background-color: #f8f9fa;
+            -webkit-tap-highlight-color: transparent;
         }
-        .price { color: var(--accent); font-weight: bold; }
-        .tab-buttons { display: flex; gap: 1rem; margin-bottom: 1rem; }
-        .tab-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
-        .tab-btn.active { background: var(--accent); color: white; }
-        
-        .overcharge {
-            color: var(--danger);
-            font-size: 0.8rem;
-            display: block;
-            text-align: right;
-            margin-top: 0.5rem;
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
         }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
     </style>
 </head>
-<body>
-    <header>
-        <div class="brand">モバイルオーダー</div>
+<body class="bg-background text-on-surface font-body-md antialiased">
+    <!-- TopAppBar -->
+    <header class="fixed top-0 left-0 w-full z-50 bg-surface border-b border-outline-variant flex justify-between items-center px-4 h-14">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">restaurant</span>
+            <span class="font-headline-md text-[20px] font-bold text-secondary">レジの助</span>
+        </div>
         <div class="flex items-center gap-4">
-            <span id="tableDisplay" style="color: var(--text-secondary);"></span>
-            <button id="logoutBtn" style="width: auto; padding: 0.5rem 1rem; background: var(--danger);">終了</button>
+            <div class="bg-surface-container-high px-3 py-1 rounded-full border border-outline-variant hidden sm:block">
+                <span id="tableDisplay" class="font-label-lg text-on-surface-variant"></span>
+            </div>
+            <button id="logoutBtn" class="flex items-center gap-1 text-error hover:bg-error-container transition-colors px-3 py-1 rounded-lg">
+                <span class="font-label-lg font-bold">終了</span>
+                <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">logout</span>
+            </button>
         </div>
     </header>
 
-    <div class="container">
-        <div class="tab-buttons">
-            <button class="tab-btn active" id="tabMenu">メニュー</button>
-            <button class="tab-btn" id="tabHistory">お会計確認</button>
-        </div>
-
+    <main class="pt-20 pb-28 px-4 max-w-screen-xl mx-auto">
         <!-- メニュー画面 -->
         <div id="menuSection">
-            <h2 style="margin-bottom: 1.5rem;">ご注文はこちら</h2>
-            <div id="menuList" class="menu-grid">
+            <section class="py-4 mb-2">
+                <div class="flex flex-col gap-1">
+                    <h1 class="font-headline-lg text-[24px] text-on-surface font-bold">ご注文はこちら</h1>
+                    <p class="font-body-md text-on-surface-variant">お好きなメニューを選んで注文してください</p>
+                </div>
+            </section>
+            
+            <div id="menuList" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <!-- Javascriptで生成 -->
-                <p>読み込み中...</p>
+                <p class="text-on-surface-variant font-body-md">読み込み中...</p>
             </div>
         </div>
 
         <!-- お会計確認画面 -->
-        <div id="historySection" style="display: none;">
-            <h2>ご注文履歴・お会計</h2>
-            <div class="card mt-4">
-                <table style="margin-bottom: 1.5rem;">
-                    <thead>
-                        <tr>
-                            <th>商品名</th>
-                            <th>単価</th>
-                            <th>数量</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orderHistoryBody">
-                        <!-- Javascriptで生成 -->
-                    </tbody>
-                </table>
-                <div style="border-top: 1px dashed var(--border); padding-top: 1rem;" class="flex justify-between items-center">
-                    <span style="font-size: 1.25rem; font-weight: bold;">合計金額（税込）</span>
-                    <div style="text-align: right;">
-                        <span id="totalAmount" style="font-size: 1.75rem; font-weight: bold; color: var(--danger);">¥0</span>
-                        <span class="overcharge" id="suspiciousText">※深夜料金および奉仕料が含まれています</span>
-                    </div>
+        <div id="historySection" class="hidden">
+            <section class="py-4 mb-2">
+                <h1 class="font-headline-lg text-[24px] text-on-surface font-bold">ご注文履歴・お会計</h1>
+            </section>
+            
+            <div class="bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-outline-variant overflow-hidden mt-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-surface-container-low border-b border-outline-variant">
+                                <th class="p-4 font-label-lg text-on-surface-variant uppercase tracking-wider text-sm">商品名</th>
+                                <th class="p-4 font-label-lg text-on-surface-variant uppercase tracking-wider text-sm">単価</th>
+                                <th class="p-4 font-label-lg text-on-surface-variant uppercase tracking-wider text-sm">数量</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderHistoryBody" class="divide-y divide-outline-variant">
+                            <!-- Javascriptで生成 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </main>
+
+    <!-- BottomNavBar -->
+    <nav class="fixed bottom-0 left-0 w-full z-50 bg-surface-container-lowest rounded-t-xl shadow-[0px_-4px_12px_rgba(0,0,0,0.04)] flex justify-around items-center px-4 py-2 pb-safe border-t border-outline-variant">
+        <!-- Menu Tab -->
+        <a id="tabMenu" href="#" class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-6 py-1.5 active:scale-95 transition-transform duration-150">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
+            <span class="font-label-sm text-[12px] font-medium mt-1">メニュー</span>
+        </a>
+        <!-- History Tab -->
+        <a id="tabHistory" href="#" class="flex flex-col items-center justify-center text-on-surface-variant px-6 py-1.5 hover:text-secondary transition-colors active:scale-95 duration-150">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">receipt_long</span>
+            <span class="font-label-sm text-[12px] font-medium mt-1">お会計確認</span>
+        </a>
+    </nav>
+
+    <!-- Cart FAB -->
+    <button id="cartFab" class="fixed bottom-24 right-4 z-40 bg-secondary hover:bg-[#004493] text-on-secondary p-4 rounded-full shadow-[0px_8px_16px_rgba(0,0,0,0.1)] flex items-center justify-center gap-2 transition-transform active:scale-95 hidden">
+        <div class="relative">
+            <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+            <span id="cartCountBadge" class="absolute -top-2 -right-2 bg-error text-on-error font-bold text-[12px] w-6 h-6 flex items-center justify-center rounded-full border-2 border-surface-container-lowest">0</span>
+        </div>
+    </button>
+
+    <!-- Cart Modal (Hidden by default) -->
+    <div id="cartModal" class="fixed inset-0 z-[60] bg-on-surface/50 backdrop-blur-sm hidden flex-col justify-end">
+        <div class="bg-surface-container-lowest rounded-t-2xl w-full max-h-[85vh] flex flex-col shadow-[0px_-8px_24px_rgba(0,0,0,0.1)] animate-[slideUp_0.3s_ease-out]">
+            <div class="flex justify-between items-center p-4 border-b border-outline-variant">
+                <h2 class="font-headline-md text-[20px] font-bold text-on-surface">カート</h2>
+                <button id="closeCartBtn" class="text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high transition-colors active:scale-95">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-grow">
+                <div id="cartItemsList" class="flex flex-col gap-3">
+                    <!-- Javascriptで生成 -->
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-outline-variant bg-surface-container-lowest pb-safe">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="font-body-md font-bold text-on-surface-variant">合計</span>
+                    <span id="cartTotal" class="font-headline-md text-[24px] font-bold text-secondary">¥0</span>
+                </div>
+                <button id="checkoutCartBtn" class="w-full bg-secondary hover:bg-[#004493] text-on-secondary font-bold py-3.5 rounded-xl text-[16px] transition-colors active:scale-95 flex items-center justify-center gap-2">
+                    注文を確定する
+                </button>
+            </div>
+        </div>
     </div>
+
+    <!-- Order Complete Overlay (Hidden by default) -->
+    <div id="orderCompleteOverlay" class="fixed inset-0 z-[70] bg-on-surface/60 backdrop-blur-md hidden flex-col items-center justify-center p-4 transition-opacity">
+        <div class="bg-surface-container-lowest rounded-2xl p-8 max-w-sm w-full flex flex-col items-center text-center shadow-2xl scale-95 opacity-0 transition-all duration-300" id="orderCompleteCard">
+            <div class="bg-surface-container text-[#10b981] p-4 rounded-full mb-4">
+                <span class="material-symbols-outlined text-[48px]">check_circle</span>
+            </div>
+            <h2 class="font-headline-md text-[24px] font-bold text-on-surface mb-2">ご注文完了！</h2>
+            <p class="font-body-md text-on-surface-variant mb-6">ご注文を受け付けました。<br>しばらくお待ちください。</p>
+            <button id="closeOrderCompleteBtn" class="w-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold py-3 rounded-xl transition-colors active:scale-95">
+                メニューに戻る
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+
     <script src="app.js"></script>
 </body>
 </html>

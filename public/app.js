@@ -63,24 +63,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('tableDisplay').textContent = `${tableName}`;
 
+        let cart = [];
+        let allMenuItems = [];
+
+        // Check if already checked out on load
+        fetch(`${API_BASE}/table/status`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok' && data.data.status === 'checked_out') {
+                window.location.href = 'thankyou.html';
+            }
+        })
+        .catch(err => console.error('Initial Status check failed:', err));
+
         // Tabs
         const tabMenu = document.getElementById('tabMenu');
         const tabHistory = document.getElementById('tabHistory');
         const menuSection = document.getElementById('menuSection');
         const historySection = document.getElementById('historySection');
 
-        tabMenu.addEventListener('click', () => {
-            tabMenu.classList.add('active');
-            tabHistory.classList.remove('active');
-            menuSection.style.display = 'block';
-            historySection.style.display = 'none';
+        tabMenu.addEventListener('click', (e) => {
+            e.preventDefault();
+            tabMenu.classList.remove('text-on-surface-variant', 'hover:text-secondary');
+            tabMenu.classList.add('bg-secondary-container', 'text-on-secondary-container');
+            tabHistory.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+            tabHistory.classList.add('text-on-surface-variant', 'hover:text-secondary');
+            menuSection.classList.remove('hidden');
+            historySection.classList.add('hidden');
         });
 
-        tabHistory.addEventListener('click', () => {
-            tabHistory.classList.add('active');
-            tabMenu.classList.remove('active');
-            menuSection.style.display = 'none';
-            historySection.style.display = 'block';
+        tabHistory.addEventListener('click', (e) => {
+            e.preventDefault();
+            tabHistory.classList.remove('text-on-surface-variant', 'hover:text-secondary');
+            tabHistory.classList.add('bg-secondary-container', 'text-on-secondary-container');
+            tabMenu.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+            tabMenu.classList.add('text-on-surface-variant', 'hover:text-secondary');
+            menuSection.classList.add('hidden');
+            historySection.classList.remove('hidden');
             loadHistory();
         });
 
@@ -91,81 +112,206 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'ok') {
+                allMenuItems = data.data;
                 const menuList = document.getElementById('menuList');
                 menuList.innerHTML = '';
                 data.data.forEach(item => {
                     const div = document.createElement('div');
-                    div.className = 'menu-item';
+                    div.className = 'bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-outline-variant flex flex-col group active:scale-[0.98] transition-transform';
                     div.innerHTML = `
-                        <div>
-                            <div style="font-weight: bold;">${item.name}</div>
-                            <div class="price">¥${item.price}</div>
+                        <div class="p-4 flex flex-col flex-grow">
+                            <h3 class="font-headline-md text-[18px] text-on-surface font-bold mb-1">${item.name}</h3>
+                            <p class="font-body-md text-secondary font-bold mb-4">¥${item.price}</p>
+                            <button onclick="addToCart(${item.id})" class="mt-auto w-full py-2.5 bg-secondary-container hover:bg-secondary text-on-secondary-container hover:text-on-secondary transition-all rounded-lg font-label-lg font-bold text-[14px] flex items-center justify-center gap-2 active:opacity-70">
+                                <span class="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+                                カートへ追加
+                            </button>
                         </div>
-                        <button onclick="placeOrder(${item.id})" style="width: auto; padding: 0.5rem 1rem;">注文</button>
                     `;
                     menuList.appendChild(div);
                 });
             }
         });
 
-        // Global order function
-        window.placeOrder = async (menuItemId) => {
-            if(!confirm('この商品を注文しますか？')) return;
-            try {
-                const res = await fetch(`${API_BASE}/orders`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ menu_item_id: menuItemId, quantity: 1 })
-                });
-                if (res.ok) {
-                    alert('ご注文を承りました！');
+        // Cart Logic
+        const cartFab = document.getElementById('cartFab');
+        const cartCountBadge = document.getElementById('cartCountBadge');
+        const cartModal = document.getElementById('cartModal');
+        const closeCartBtn = document.getElementById('closeCartBtn');
+        const cartItemsList = document.getElementById('cartItemsList');
+        const cartTotal = document.getElementById('cartTotal');
+        const checkoutCartBtn = document.getElementById('checkoutCartBtn');
+
+        const orderCompleteOverlay = document.getElementById('orderCompleteOverlay');
+        const closeOrderCompleteBtn = document.getElementById('closeOrderCompleteBtn');
+        const orderCompleteCard = document.getElementById('orderCompleteCard');
+
+        window.addToCart = (menuItemId) => {
+            const item = allMenuItems.find(i => i.id === menuItemId);
+            if (!item) return;
+            
+            const existing = cart.find(c => c.id === menuItemId);
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                cart.push({ ...item, quantity: 1 });
+            }
+            updateCartUI();
+        };
+
+        window.updateCartQuantity = (menuItemId, change) => {
+            const index = cart.findIndex(c => c.id === menuItemId);
+            if (index > -1) {
+                cart[index].quantity += change;
+                if (cart[index].quantity <= 0) {
+                    cart.splice(index, 1);
                 }
-            } catch (e) {
-                alert('注文に失敗しました');
+                updateCartUI();
             }
         };
 
-        // Load History & Bill
+        function updateCartUI() {
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCountBadge.textContent = totalItems;
+            
+            if (totalItems > 0) {
+                cartFab.classList.remove('hidden');
+            } else {
+                cartFab.classList.add('hidden');
+            }
+
+            cartItemsList.innerHTML = '';
+            let totalAmount = 0;
+            cart.forEach(item => {
+                totalAmount += item.price * item.quantity;
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-surface-container-low p-3 rounded-xl border border-outline-variant';
+                div.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-bold text-on-surface text-[14px]">${item.name}</span>
+                        <span class="text-secondary font-bold text-[14px]">¥${item.price}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="updateCartQuantity(${item.id}, -1)" class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">remove</span>
+                        </button>
+                        <span class="font-bold w-4 text-center">${item.quantity}</span>
+                        <button onclick="updateCartQuantity(${item.id}, 1)" class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">add</span>
+                        </button>
+                    </div>
+                `;
+                cartItemsList.appendChild(div);
+            });
+            
+            if (cart.length === 0) {
+                cartItemsList.innerHTML = '<p class="text-center text-on-surface-variant py-4 font-body-md">カートは空です</p>';
+                checkoutCartBtn.disabled = true;
+                checkoutCartBtn.classList.add('opacity-50');
+            } else {
+                checkoutCartBtn.disabled = false;
+                checkoutCartBtn.classList.remove('opacity-50');
+            }
+            
+            cartTotal.textContent = `¥${totalAmount}`;
+        }
+
+        cartFab.addEventListener('click', () => {
+            cartModal.classList.remove('hidden');
+            cartModal.classList.add('flex');
+        });
+
+        closeCartBtn.addEventListener('click', () => {
+            cartModal.classList.add('hidden');
+            cartModal.classList.remove('flex');
+        });
+
+        checkoutCartBtn.addEventListener('click', async () => {
+            if (cart.length === 0) return;
+            
+            checkoutCartBtn.disabled = true;
+            checkoutCartBtn.innerHTML = '<span class="material-symbols-outlined animate-spin" style="font-size: 18px;">sync</span> 送信中...';
+
+            try {
+                const promises = cart.map(item => {
+                    return fetch(`${API_BASE}/orders`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ menu_item_id: item.id, quantity: item.quantity })
+                    });
+                });
+
+                const results = await Promise.all(promises);
+                const hasError = results.some(r => !r.ok);
+
+                if (hasError) {
+                    alert('一部の注文が失敗しました。お会計済みの可能性があります。');
+                } else {
+                    cart = [];
+                    updateCartUI();
+                    cartModal.classList.add('hidden');
+                    cartModal.classList.remove('flex');
+                    
+                    orderCompleteOverlay.classList.remove('hidden');
+                    orderCompleteOverlay.classList.add('flex');
+                    setTimeout(() => {
+                        orderCompleteCard.classList.remove('scale-95', 'opacity-0');
+                        orderCompleteCard.classList.add('scale-100', 'opacity-100');
+                    }, 10);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('注文に失敗しました。通信エラー。');
+            } finally {
+                checkoutCartBtn.disabled = false;
+                checkoutCartBtn.innerHTML = '注文を確定する';
+            }
+        });
+
+        closeOrderCompleteBtn.addEventListener('click', () => {
+            orderCompleteCard.classList.remove('scale-100', 'opacity-100');
+            orderCompleteCard.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                orderCompleteOverlay.classList.add('hidden');
+                orderCompleteOverlay.classList.remove('flex');
+                
+                if (tabHistory.classList.contains('bg-secondary-container')) {
+                    loadHistory();
+                }
+            }, 300);
+        });
+
+
+        // Load History
         function loadHistory() {
-            // Fetch session data (which has the IDOR vulnerability)
             fetch(`${API_BASE}/r/session-data`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             .then(res => res.json())
             .then(data => {
                 const tbody = document.getElementById('orderHistoryBody');
-                const encodedTableId = btoa(tableName); // Front-end filter to show only this table
                 
                 if (data.status === 'ok') {
                     let html = '';
-                    let subtotal = 0;
 
-                    // The vulnerability: data.data contains EVERY table's orders.
-                    // The client side filters it.
-                    const myOrders = data.data.filter(o => o.table_id === encodedTableId);
+                    const myOrders = data.data;
 
                     myOrders.forEach(o => {
-                        html += `<tr>
-                            <td>${o.menu_name}</td>
-                            <td>¥${o.price}</td>
-                            <td>${o.quantity}</td>
+                        html += `<tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors">
+                            <td class="p-4 font-body-md text-on-surface">${o.menu_name}</td>
+                            <td class="p-4 font-body-md text-on-surface">¥${o.price}</td>
+                            <td class="p-4 font-body-md text-on-surface text-center">${o.quantity}</td>
                         </tr>`;
-                        subtotal += (o.price * o.quantity);
                     });
 
                     if (myOrders.length === 0) {
-                        html = `<tr><td colspan="3" class="text-center text-secondary">まだ注文がありません</td></tr>`;
+                        html = `<tr><td colspan="3" class="p-8 text-center text-on-surface-variant font-body-md">まだ注文がありません</td></tr>`;
                     }
 
                     tbody.innerHTML = html;
-
-                    // INTENTIONAL OVERCHARGE: Add 2500 JPY to the actual subtotal
-                    // This is the "botta-kuri" (overcharge) mechanism shown to the customer
-                    let fakeTotal = subtotal > 0 ? subtotal + 2500 : 0;
-                    document.getElementById('totalAmount').textContent = `¥${fakeTotal}`;
                 }
             });
         }

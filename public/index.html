@@ -2,35 +2,89 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>モバイルオーダー | いらっしゃいませ</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>レジの助 | いらっしゃいませ</title>
+    
+    <!-- Stitch Design System (Tailwind & Fonts) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#f8f9fa",
+                        "on-background": "#191c1d",
+                        "surface": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "surface-variant": "#e1e3e4",
+                        "on-surface-variant": "#444748",
+                        "primary": "#5d5f5f",
+                        "on-primary": "#ffffff",
+                        "secondary": "#0058bb",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#1471e6",
+                        "on-secondary-container": "#fefcff",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "outline": "#747878",
+                        "outline-variant": "#c4c7c8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-container": "#edeeef",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-highest": "#e1e3e4"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+                        "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "label-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f8f9fa;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
 </head>
-<body>
-    <div class="login-container" style="max-width: 400px; margin: 10vh auto;">
-        <div class="card text-center">
-            <h1 class="brand" style="margin-bottom: 0.5rem;">モバイルオーダー</h1>
-            <p class="text-secondary" style="margin-bottom: 2rem;">ご来店ありがとうございます</p>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="w-full max-w-[400px]">
+        <div class="bg-surface-container-lowest rounded-2xl p-8 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-outline-variant flex flex-col items-center text-center">
             
-            <div style="background: #2dd4bf; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <rect x="7" y="7" width="3" height="3"></rect>
-                    <rect x="14" y="7" width="3" height="3"></rect>
-                    <rect x="7" y="14" width="3" height="3"></rect>
-                    <rect x="14" y="14" width="3" height="3"></rect>
-                </svg>
+            <h1 class="font-headline-lg text-[28px] font-bold text-secondary mb-2">レジの助</h1>
+            <p class="text-on-surface-variant font-body-md mb-8">ご来店ありがとうございます</p>
+            
+            <!-- QR Icon Placeholder -->
+            <div class="bg-secondary-container text-on-secondary-container p-4 rounded-xl mb-6">
+                <span class="material-symbols-outlined" style="font-size: 48px;">qr_code_scanner</span>
             </div>
 
-            <p style="margin-bottom: 1rem;">QRコードを読み取って注文を開始してください</p>
+            <p class="text-on-surface font-body-md mb-6">QRコードを読み取って<br>注文を開始してください</p>
 
-            <form id="qrForm">
-                <div class="form-group text-left">
-                    <label for="qrData">（手動入力用）卓番号:</label>
-                    <input type="text" id="qrData" name="qrData" placeholder="例: table_3" required>
+            <form id="qrForm" class="w-full">
+                <div class="text-left mb-6">
+                    <label for="qrData" class="block text-on-surface-variant font-label-lg font-semibold text-[14px] mb-2">（手動入力用）卓番号:</label>
+                    <input type="text" id="qrData" name="qrData" placeholder="例: table_1" required
+                           class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary transition-colors">
                 </div>
-                <div id="loginError" class="error-message"></div>
-                <button type="submit" class="mt-4">注文画面へ</button>
+                <div id="loginError" class="hidden text-error font-body-md mb-4"></div>
+                <button type="submit" class="w-full bg-secondary hover:bg-[#004493] text-on-secondary font-bold py-3 px-6 rounded-lg transition-colors active:scale-[0.98]">
+                    注文画面へ
+                </button>
             </form>
         </div>
     </div>

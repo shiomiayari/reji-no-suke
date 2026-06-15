@@ -2,53 +2,88 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>レジの助 | レジ・管理画面</title>
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- Stitch Design System (Tailwind & Fonts) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#f8f9fa",
+                        "on-background": "#191c1d",
+                        "surface": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "surface-variant": "#e1e3e4",
+                        "on-surface-variant": "#444748",
+                        "primary": "#5d5f5f",
+                        "on-primary": "#ffffff",
+                        "secondary": "#0058bb",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#1471e6",
+                        "on-secondary-container": "#fefcff",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "outline": "#747878",
+                        "outline-variant": "#c4c7c8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-container": "#edeeef",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-highest": "#e1e3e4"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+                        "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "label-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        .admin-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
         }
-        .table-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+        body {
+            background-color: #f8f9fa;
+            -webkit-tap-highlight-color: transparent;
         }
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 0.5rem;
-        }
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        .status-active { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .status-checked-out { background: rgba(148, 163, 184, 0.2); color: var(--text-secondary); }
     </style>
 </head>
-<body>
-    <header>
-        <div class="brand">レジの助 <span style="font-size: 1rem; color: var(--text-secondary);">スタッフ用管理画面</span></div>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen">
+    <header class="bg-surface-container-lowest border-b border-outline-variant px-6 py-4 flex items-center shadow-sm sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">storefront</span>
+            <div class="font-headline-lg text-[22px] font-bold text-secondary">
+                レジの助
+                <span class="font-body-md text-[14px] text-on-surface-variant font-normal ml-2">スタッフ用管理画面</span>
+            </div>
+        </div>
     </header>
 
-    <div class="container" style="max-width: 1400px;">
-        <h2>稼働状況一覧</h2>
-        <div id="adminGrid" class="admin-grid">
-            <p>読み込み中...</p>
+    <main class="p-6 max-w-[1400px] mx-auto">
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h1 class="font-headline-lg text-[28px] font-bold text-on-surface">稼働状況一覧</h1>
+                <p class="font-body-md text-on-surface-variant">各卓の注文状況と金額を確認・精算します。</p>
+            </div>
         </div>
-    </div>
+
+        <div id="adminGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <p class="text-on-surface-variant">読み込み中...</p>
+        </div>
+    </main>
     
     <script src="admin.js"></script>
 </body>

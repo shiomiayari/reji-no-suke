@@ -13,7 +13,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const btoa = (str) => Buffer.from(str).toString('base64');
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -34,9 +33,13 @@ app.post('/api/v2/auth/signin', (req, res) => {
     const table = db.prepare('SELECT * FROM tables WHERE name = ?').get(qr_data);
     
     if (table) {
+        if (table.status === 'checked_out') {
+            return res.status(403).json({ status: 'error', message: 'この卓はすでにお会計済みです。' });
+        }
+        
         // Issue token for this table
         const token = jwt.sign({ table_id: table.name, role: 'customer' }, JWT_SECRET, { expiresIn: '24h' });
-        // [VULNERABILITY] Token exposed in response
+        // ログイン成功時にトークンを返す
         res.json({
             status: 'ok',
             message: 'テーブルの読み込みに成功しました。',
@@ -49,14 +52,14 @@ app.post('/api/v2/auth/signin', (req, res) => {
 });
 
 // 2. GET /api/v2/r/session-data
-// [VULNERABILITY] IDOR: Returns ALL orders for all tables.
 app.get('/api/v2/r/session-data', authenticateToken, (req, res) => {
     const orders = db.prepare(`
         SELECT o.id, o.table_id, o.quantity, o.ordered_at, m.id as menu_item_id, m.name as menu_name, m.price
         FROM orders o
         JOIN menu_items m ON o.menu_item_id = m.id
+        WHERE o.table_id = ?
         ORDER BY o.ordered_at DESC
-    `).all();
+    `).all(req.user.table_id);
 
     res.json({
         status: 'ok',
@@ -84,43 +87,14 @@ app.post('/api/v2/orders', authenticateToken, (req, res) => {
         return res.status(403).json({ error: '会計済みの卓です。追加の注文はできません。' });
     }
 
-    const tableIdBase64 = btoa(table_name);
     const timestamp = new Date().toISOString();
 
     const insert = db.prepare('INSERT INTO orders (table_id, menu_item_id, quantity, ordered_at) VALUES (?, ?, ?, ?)');
-    insert.run(tableIdBase64, menu_item_id, quantity, timestamp);
+    insert.run(table_name, menu_item_id, quantity, timestamp);
 
     res.json({ status: 'ok', message: 'ご注文を承りました！' });
 });
 
-// 5. GET /api/v2/orders/:table_id (The Final Goal Endpoint for Hackers)
-app.get('/api/v2/orders/:table_id', (req, res) => {
-    const decodedTableId = req.params.table_id;
-
-    const tableExists = db.prepare('SELECT * FROM tables WHERE name = ?').get(decodedTableId);
-    if (!tableExists) {
-        return res.status(404).json({ error: '卓が見つかりません。卓番号が正しくデコードされているか確認してください。' });
-    }
-
-    const base64TableId = btoa(decodedTableId);
-
-    const orders = db.prepare(`
-        SELECT m.name as item, m.price, o.quantity, (m.price * o.quantity) as subtotal, o.ordered_at
-        FROM orders o
-        JOIN menu_items m ON o.menu_item_id = m.id
-        WHERE o.table_id = ?
-        ORDER BY o.ordered_at ASC
-    `).all(base64TableId);
-
-    const total = orders.reduce((sum, order) => sum + order.subtotal, 0);
-
-    res.json({
-        message: '【ハッキング成功！】正しい注文データと合計金額を取得しました。',
-        target_table: decodedTableId,
-        correct_total: total,
-        receipt_details: orders
-    });
-});
 
 // 6. GET /api/v2/admin/tables
 app.get('/api/v2/admin/tables', (req, res) => {
@@ -132,8 +106,7 @@ app.get('/api/v2/admin/tables', (req, res) => {
     `).all();
 
     const result = tables.map(t => {
-        const base64TableId = btoa(t.name);
-        const tableOrders = orders.filter(o => o.table_id === base64TableId);
+        const tableOrders = orders.filter(o => o.table_id === t.name);
         const total = tableOrders.reduce((sum, o) => sum + (o.price * o.quantity), 0);
         return {
             name: t.name,
@@ -151,6 +124,17 @@ app.post('/api/v2/admin/checkout', express.json(), (req, res) => {
     if (!table_name) return res.status(400).json({ error: 'Missing table_name' });
     db.prepare('UPDATE tables SET status = ? WHERE name = ?').run('checked_out', table_name);
     res.json({ status: 'ok', message: '会計処理が完了しました' });
+});
+
+// 7.5 POST /api/v2/admin/reset
+app.post('/api/v2/admin/reset', express.json(), (req, res) => {
+    const { table_name } = req.body;
+    if (!table_name) return res.status(400).json({ error: 'Missing table_name' });
+    // Reset status to active
+    db.prepare('UPDATE tables SET status = ? WHERE name = ?').run('active', table_name);
+    // Clear all past orders for this table so total is ¥0
+    db.prepare('DELETE FROM orders WHERE table_id = ?').run(table_name);
+    res.json({ status: 'ok', message: '卓をリセットしました' });
 });
 
 // 8. GET /api/v2/table/status

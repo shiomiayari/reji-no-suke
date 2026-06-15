@@ -2,47 +2,90 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>モバイルオーダー | 会計完了</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .thankyou-container {
-            max-width: 500px;
-            margin: 15vh auto;
-            text-align: center;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>レジの助 | 会計完了</title>
+    
+    <!-- Stitch Design System (Tailwind & Fonts) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#f8f9fa",
+                        "on-background": "#191c1d",
+                        "surface": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "surface-variant": "#e1e3e4",
+                        "on-surface-variant": "#444748",
+                        "primary": "#5d5f5f",
+                        "on-primary": "#ffffff",
+                        "secondary": "#0058bb",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#1471e6",
+                        "on-secondary-container": "#fefcff",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "outline": "#747878",
+                        "outline-variant": "#c4c7c8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-container": "#edeeef",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-highest": "#e1e3e4"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+                        "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "label-lg": ["Inter", "sans-serif"],
+                        "label-sm": ["Inter", "sans-serif"]
+                    }
+                }
+            }
         }
-        .icon {
-            margin-bottom: 2rem;
-            color: var(--success);
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f8f9fa;
+            -webkit-tap-highlight-color: transparent;
         }
     </style>
 </head>
-<body>
-    <div class="thankyou-container">
-        <div class="card">
-            <div class="icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col justify-center items-center p-4">
+    <div class="w-full max-w-[500px]">
+        <div class="bg-surface-container-lowest rounded-2xl p-10 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-outline-variant flex flex-col items-center text-center">
+            
+            <div class="bg-surface-container text-[#10b981] p-5 rounded-full mb-6">
+                <span class="material-symbols-outlined" style="font-size: 56px;">check_circle</span>
             </div>
-            <h1 style="color: var(--text-primary);">お会計が完了しました</h1>
-            <p class="text-secondary mt-4">
+            
+            <h1 class="font-headline-lg text-[28px] font-bold text-on-surface mb-4">お会計が完了しました</h1>
+            
+            <p class="text-on-surface-variant font-body-md mb-8">
                 本日のご来店、誠にありがとうございました。<br>
                 またのお越しをお待ちしております。
             </p>
-            <p class="text-secondary mt-8" style="font-size: 0.8rem;">
-                ※この画面からは注文履歴の確認や追加注文はできません。
-            </p>
+            
+            <div class="bg-surface-container-low border border-outline-variant rounded-lg p-4 w-full">
+                <p class="text-on-surface-variant font-label-sm text-sm">
+                    ※この画面からは注文履歴の確認や追加注文はできません。
+                </p>
+            </div>
         </div>
     </div>
     
     <script>
-        // Clear token to prevent normal operations
-        // NOTE: In the scenario, the user will need to rely on DevTools to find the token 
-        // that was intercepted BEFORE it was cleared, or we don't clear it so they can use it.
-        // For a CTF scenario, keeping it in localStorage is friendlier so they can pull it via console.
-        // Let's keep it in localStorage to make the hack possible without requiring persistent network logs.
+        // Token is intentionally kept to allow CTF interaction if needed, or normal flow.
     </script>
 </body>
 </html>

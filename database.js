@@ -36,7 +36,7 @@ const initDb = () => {
     `).run();
 
     // Create orders table
-    // table_id is intentionally TEXT to store Base64 string as per specification
+    // table_id stores the table name as TEXT
     db.prepare(`
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
