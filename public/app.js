@@ -1,5 +1,13 @@
 const API_BASE = '/api/v2';
 
+// TODO: メニュー検索機能は現在WAFの誤検知バグ調査中のため、UI上からは一時的に無効化しています。
+// 復旧までは直接APIを叩いてテストしてください。
+// async function searchMenu(query) {
+//     const res = await fetch(`${API_BASE}/menu/search?q=${query}`);
+//     const data = await res.json();
+//     console.log(data);
+// }
+
 function parseJwt(token) {
     try {
         return JSON.parse(atob(token.split('.')[1]));
@@ -29,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
 
                 if (res.ok && data.token) {
+                    // Note: table_2 はシナリオ上お会計済みになりますが、table_1 や table_3 などはテスト用に稼働させています。
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('table_name', data.table_name);
                     window.location.href = 'order.html';

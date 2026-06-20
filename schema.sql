@@ -19,7 +19,8 @@ CREATE TABLE users (
 CREATE TABLE menu_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    price INTEGER NOT NULL
+    price INTEGER NOT NULL,
+    is_hidden BOOLEAN DEFAULT 0
 );
 
 CREATE TABLE orders (

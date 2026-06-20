@@ -86,6 +86,9 @@
     
     <script>
         // Token is intentionally kept to allow CTF interaction if needed, or normal flow.
+        const urlParams = new URLSearchParams(window.location.search);
+        const table = urlParams.get('t') || 'table_2';
+        document.querySelector('h1').innerText = `${table} のお会計が完了しました`;
     </script>
 </body>
 </html>
