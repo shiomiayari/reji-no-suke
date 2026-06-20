@@ -246,4 +246,9 @@ app.post('/api/v2/admin/receipt', async (c) => {
     return c.json({ status: 'ok', output: `Successfully generated PDF: ${filename}` });
 });
 
+// 404 Handler - Redirects unknown URLs to the error page
+app.notFound((c) => {
+    return c.redirect(`/api/v2/error?msg=${encodeURIComponent('ページが見つかりません')}`);
+});
+
 export default app;
