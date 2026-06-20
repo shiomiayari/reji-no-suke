@@ -126,9 +126,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const menuList = document.getElementById('menuList');
                 menuList.innerHTML = '';
                 data.data.forEach(item => {
+                    // テキトーなダミー画像（Unsplash）を名前に応じて割り当て
+                    let imgUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop'; // デフォルト（小鉢系）
+                    if (item.name.includes('ビール')) imgUrl = 'https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?w=400&h=300&fit=crop';
+                    else if (item.name.includes('ハイボール')) imgUrl = 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=400&h=300&fit=crop';
+                    else if (item.name.includes('茶')) imgUrl = 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&h=300&fit=crop';
+                    else if (item.name.includes('唐揚げ')) imgUrl = 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&h=300&fit=crop';
+                    else if (item.name.includes('串焼き')) imgUrl = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop';
+                    else if (item.name.includes('ポテト')) imgUrl = 'https://images.unsplash.com/photo-1576107232684-1279f390859f?w=400&h=300&fit=crop';
+                    else if (item.name.includes('卵')) imgUrl = 'https://images.unsplash.com/photo-1525059337994-6f2a1311b4d4?w=400&h=300&fit=crop';
+
                     const div = document.createElement('div');
                     div.className = 'bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-outline-variant flex flex-col group active:scale-[0.98] transition-transform';
                     div.innerHTML = `
+                        <div class="h-32 w-full bg-surface-variant overflow-hidden">
+                            <img src="${imgUrl}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
+                        </div>
                         <div class="p-4 flex flex-col flex-grow">
                             <h3 class="font-headline-md text-[18px] text-on-surface font-bold mb-1">${item.name}</h3>
                             <p class="font-body-md text-secondary font-bold mb-4">¥${item.price}</p>
