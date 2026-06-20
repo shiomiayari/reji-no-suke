@@ -1,0 +1,12 @@
+name = "reji-no-suke"
+main = "server.js"
+compatibility_date = "2026-06-20"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "reji-no-suke-db"
+database_id = "a2290b6e-99f4-4687-b85d-b39495dc8ec2"

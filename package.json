@@ -4,9 +4,10 @@
   "description": "This is a new public repository created locally and on GitHub.",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "seed": "node seed.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "wrangler dev",
+    "dev": "wrangler dev",
+    "seed": "wrangler d1 execute reji-no-suke-db --local --file=seed.sql",
+    "deploy": "wrangler deploy"
   },
   "repository": {
     "type": "git",
@@ -21,10 +22,10 @@
   },
   "homepage": "https://github.com/shiomiayari/reji-no-suke#readme",
   "dependencies": {
-    "better-sqlite3": "^12.10.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "hono": "^4.12.26"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260620.1",
+    "wrangler": "^4.103.0"
   }
 }

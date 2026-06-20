@@ -53,7 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Order App Logic
-    if (window.location.pathname.endsWith('order.html') || window.location.pathname === '/order.html') {
+    const path = window.location.pathname;
+    if (path.endsWith('order.html') || path === '/order.html' || path.endsWith('/order') || path === '/order') {
         const token = localStorage.getItem('token');
         const tableName = localStorage.getItem('table_name');
         if (!token) {

@@ -1,105 +1,112 @@
-require('dotenv').config();
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const path = require('path');
-const db = require('./database');
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { sign, verify } from 'hono/jwt';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_for_hands_on';
+const app = new Hono();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// CORSの設定
+app.use('/*', cors());
 
+const getJwtSecret = (c) => c.env.JWT_SECRET || 'super_secret_jwt_key_for_hands_on';
 
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
+// JWT認証ミドルウェア
+const authenticateToken = async (c, next) => {
+    const authHeader = c.req.header('authorization');
     const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ error: 'Forbidden' });
-        req.user = user;
-        next();
-    });
+    if (!token) return c.json({ error: 'Unauthorized' }, 401);
+    
+    try {
+        const user = await verify(token, getJwtSecret(c), 'HS256');
+        c.set('user', user);
+        await next();
+    } catch (err) {
+        console.error('JWT verify error:', err);
+        return c.json({ error: 'Forbidden', details: err.message }, 403);
+    }
 };
 
 // 1. POST /api/v2/auth/signin (Simulates QR Code scan)
-app.post('/api/v2/auth/signin', (req, res) => {
-    const { qr_data } = req.body;
+app.post('/api/v2/auth/signin', async (c) => {
+    const { qr_data } = await c.req.json();
     
-    // Check if table exists
-    const table = db.prepare('SELECT * FROM tables WHERE name = ?').get(qr_data);
+    const table = await c.env.DB.prepare('SELECT * FROM tables WHERE name = ?').bind(qr_data).first();
     
     if (table) {
         if (table.status === 'checked_out') {
-            return res.status(403).json({ status: 'error', message: 'この卓はすでにお会計済みです。' });
+            return c.json({ status: 'error', message: 'この卓はすでにお会計済みです。' }, 403);
         }
         
         // Issue token for this table
-        const token = jwt.sign({ table_id: table.name, role: 'customer' }, JWT_SECRET, { expiresIn: '24h' });
-        // ログイン成功時にトークンを返す
-        res.json({
+        const payload = {
+            table_id: table.name,
+            role: 'customer',
+            exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // 24 hours
+        };
+        const token = await sign(payload, getJwtSecret(c));
+        
+        return c.json({
             status: 'ok',
             message: 'テーブルの読み込みに成功しました。',
             token: token,
             table_name: table.name
         });
     } else {
-        res.status(401).json({ status: 'error', message: '無効なQRコードです。' });
+        return c.json({ status: 'error', message: '無効なQRコードです。' }, 401);
     }
 });
 
 // 2. GET /api/v2/r/session-data
-app.get('/api/v2/r/session-data', authenticateToken, (req, res) => {
-    const orders = db.prepare(`
+app.get('/api/v2/r/session-data', authenticateToken, async (c) => {
+    const user = c.get('user');
+    const { results } = await c.env.DB.prepare(`
         SELECT o.id, o.table_id, o.quantity, o.ordered_at, m.id as menu_item_id, m.name as menu_name, m.price
         FROM orders o
         JOIN menu_items m ON o.menu_item_id = m.id
         WHERE o.table_id = ?
         ORDER BY o.ordered_at DESC
-    `).all(req.user.table_id);
+    `).bind(user.table_id).all();
 
-    res.json({
+    return c.json({
         status: 'ok',
-        data: orders
+        data: results
     });
 });
 
 // 3. GET /api/v2/menu/list
-app.get('/api/v2/menu/list', authenticateToken, (req, res) => {
-    const menus = db.prepare('SELECT * FROM menu_items').all();
-    res.json({ status: 'ok', data: menus });
+app.get('/api/v2/menu/list', authenticateToken, async (c) => {
+    const { results } = await c.env.DB.prepare('SELECT * FROM menu_items').all();
+    return c.json({ status: 'ok', data: results });
 });
 
 // 4. POST /api/v2/orders (Customer creates order)
-app.post('/api/v2/orders', authenticateToken, (req, res) => {
-    const { menu_item_id, quantity } = req.body;
-    const table_name = req.user.table_id;
+app.post('/api/v2/orders', authenticateToken, async (c) => {
+    const { menu_item_id, quantity } = await c.req.json();
+    const user = c.get('user');
+    const table_name = user.table_id;
 
     if (!menu_item_id || !quantity) {
-        return res.status(400).json({ error: 'Missing required fields' });
+        return c.json({ error: 'Missing required fields' }, 400);
     }
 
-    const tableInfo = db.prepare('SELECT status FROM tables WHERE name = ?').get(table_name);
+    const tableInfo = await c.env.DB.prepare('SELECT status FROM tables WHERE name = ?').bind(table_name).first();
     if (tableInfo && tableInfo.status === 'checked_out') {
-        return res.status(403).json({ error: '会計済みの卓です。追加の注文はできません。' });
+        return c.json({ error: '会計済みの卓です。追加の注文はできません。' }, 403);
     }
 
     const timestamp = new Date().toISOString();
 
-    const insert = db.prepare('INSERT INTO orders (table_id, menu_item_id, quantity, ordered_at) VALUES (?, ?, ?, ?)');
-    insert.run(table_name, menu_item_id, quantity, timestamp);
+    await c.env.DB.prepare('INSERT INTO orders (table_id, menu_item_id, quantity, ordered_at) VALUES (?, ?, ?, ?)')
+        .bind(table_name, menu_item_id, quantity, timestamp)
+        .run();
 
-    res.json({ status: 'ok', message: 'ご注文を承りました！' });
+    return c.json({ status: 'ok', message: 'ご注文を承りました！' });
 });
 
 
 // 6. GET /api/v2/admin/tables
-app.get('/api/v2/admin/tables', (req, res) => {
-    const tables = db.prepare('SELECT * FROM tables').all();
-    const orders = db.prepare(`
+app.get('/api/v2/admin/tables', async (c) => {
+    const { results: tables } = await c.env.DB.prepare('SELECT * FROM tables').all();
+    const { results: orders } = await c.env.DB.prepare(`
         SELECT o.table_id, m.price, o.quantity
         FROM orders o
         JOIN menu_items m ON o.menu_item_id = m.id
@@ -115,36 +122,48 @@ app.get('/api/v2/admin/tables', (req, res) => {
         };
     });
 
-    res.json({ status: 'ok', data: result });
+    return c.json({ status: 'ok', data: result });
 });
 
 // 7. POST /api/v2/admin/checkout
-app.post('/api/v2/admin/checkout', express.json(), (req, res) => {
-    const { table_name } = req.body;
-    if (!table_name) return res.status(400).json({ error: 'Missing table_name' });
-    db.prepare('UPDATE tables SET status = ? WHERE name = ?').run('checked_out', table_name);
-    res.json({ status: 'ok', message: '会計処理が完了しました' });
+app.post('/api/v2/admin/checkout', async (c) => {
+    const { table_name } = await c.req.json();
+    if (!table_name) return c.json({ error: 'Missing table_name' }, 400);
+    
+    await c.env.DB.prepare('UPDATE tables SET status = ? WHERE name = ?')
+        .bind('checked_out', table_name)
+        .run();
+        
+    return c.json({ status: 'ok', message: '会計処理が完了しました' });
 });
 
 // 7.5 POST /api/v2/admin/reset
-app.post('/api/v2/admin/reset', express.json(), (req, res) => {
-    const { table_name } = req.body;
-    if (!table_name) return res.status(400).json({ error: 'Missing table_name' });
+app.post('/api/v2/admin/reset', async (c) => {
+    const { table_name } = await c.req.json();
+    if (!table_name) return c.json({ error: 'Missing table_name' }, 400);
+    
     // Reset status to active
-    db.prepare('UPDATE tables SET status = ? WHERE name = ?').run('active', table_name);
+    await c.env.DB.prepare('UPDATE tables SET status = ? WHERE name = ?')
+        .bind('active', table_name)
+        .run();
+        
     // Clear all past orders for this table so total is ¥0
-    db.prepare('DELETE FROM orders WHERE table_id = ?').run(table_name);
-    res.json({ status: 'ok', message: '卓をリセットしました' });
+    await c.env.DB.prepare('DELETE FROM orders WHERE table_id = ?')
+        .bind(table_name)
+        .run();
+        
+    return c.json({ status: 'ok', message: '卓をリセットしました' });
 });
 
 // 8. GET /api/v2/table/status
-app.get('/api/v2/table/status', authenticateToken, (req, res) => {
-    const table_name = req.user.table_id;
-    const table = db.prepare('SELECT status FROM tables WHERE name = ?').get(table_name);
-    if (!table) return res.status(404).json({ error: 'Table not found' });
-    res.json({ status: 'ok', data: { status: table.status } });
+app.get('/api/v2/table/status', authenticateToken, async (c) => {
+    const user = c.get('user');
+    const table_name = user.table_id;
+    const table = await c.env.DB.prepare('SELECT status FROM tables WHERE name = ?').bind(table_name).first();
+    
+    if (!table) return c.json({ error: 'Table not found' }, 404);
+    
+    return c.json({ status: 'ok', data: { status: table.status } });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+export default app;
