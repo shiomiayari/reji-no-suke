@@ -75,7 +75,7 @@
 
             <p class="text-on-surface font-body-md mb-6">QRコードを読み取って<br>注文を開始してください</p>
 
-            <form id="qrForm" class="w-full">
+            <form id="qrForm" class="w-full hidden">
                 <div class="text-left mb-6">
                     <label for="qrData" class="block text-on-surface-variant font-label-lg font-semibold text-[14px] mb-2">（手動入力用）卓番号:</label>
                     <input type="text" id="qrData" name="qrData" placeholder="例: table_1" required
@@ -88,6 +88,7 @@
             </form>
         </div>
     </div>
+    
     <script src="app.js"></script>
 </body>
 </html>

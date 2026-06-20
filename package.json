@@ -2,7 +2,7 @@
   "name": "reji-no-suke",
   "version": "1.0.0",
   "description": "This is a new public repository created locally and on GitHub.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "wrangler dev",
     "dev": "wrangler dev",
@@ -26,6 +26,6 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260620.1",
-    "wrangler": "^4.103.0"
+    "wrangler": "^3.114.17"
   }
 }
