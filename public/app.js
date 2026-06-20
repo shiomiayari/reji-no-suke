@@ -22,11 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Login Logic (QR Simulation)
     if (qrForm) {
-        qrForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const qrData = document.getElementById('qrData').value;
-            const errorDiv = document.getElementById('loginError');
+        const errorDiv = document.getElementById('loginError');
 
+        const doLogin = async (qrData) => {
             try {
                 const res = await fetch(`${API_BASE}/auth/signin`, {
                     method: 'POST',
@@ -37,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
 
                 if (res.ok && data.token) {
-                    // Note: table_2 はシナリオ上お会計済みになりますが、table_1 や table_3 などはテスト用に稼働させています。
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('table_name', data.table_name);
                     window.location.href = 'order.html';
@@ -52,6 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorDiv.textContent = '通信エラーが発生しました';
                 errorDiv.style.display = 'block';
             }
+        };
+
+        // QRコードURLからパラメータ (?t=table_2) を取得して自動ログイン
+        const urlParams = new URLSearchParams(window.location.search);
+        const tParam = urlParams.get('t');
+        if (tParam) {
+            document.getElementById('qrData').value = tParam;
+            doLogin(tParam);
+        }
+
+        qrForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const qrData = document.getElementById('qrData').value;
+            doLogin(qrData);
         });
     }
 
