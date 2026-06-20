@@ -33,7 +33,7 @@ app.post('/api/v2/auth/signin', async (c) => {
     
     if (table) {
         if (table.status === 'checked_out') {
-            return c.json({ status: 'error', message: 'この卓はすでにお会計済みです。' }, 403);
+            return c.json({ status: 'checked_out', message: 'この卓はすでにお会計済みです。' }, 403);
         }
         
         // Issue token for this table

@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('table_name', data.table_name);
                     window.location.href = 'order.html';
+                } else if (data.status === 'checked_out') {
+                    window.location.href = `thankyou.html?t=${encodeURIComponent(qrData)}`;
                 } else {
                     errorDiv.textContent = data.message || 'QRコードが無効です';
                     errorDiv.style.display = 'block';
