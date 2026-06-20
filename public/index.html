@@ -75,7 +75,7 @@
 
             <p class="text-on-surface font-body-md mb-6">QRコードを読み取って<br>注文を開始してください</p>
 
-            <form id="qrForm" class="w-full">
+            <form id="qrForm" class="w-full hidden">
                 <div class="text-left mb-6">
                     <label for="qrData" class="block text-on-surface-variant font-label-lg font-semibold text-[14px] mb-2">（手動入力用）卓番号:</label>
                     <input type="text" id="qrData" name="qrData" placeholder="例: table_1" required
@@ -88,6 +88,23 @@
             </form>
         </div>
     </div>
+    
+    <!-- 
+      【社内用 開発メモ】
+      ※以下の内部APIは検証中です。本番公開前には必ず削除すること！
+      
+      [Admin系API]
+      GET  /api/v2/admin/tables
+      POST /api/v2/admin/checkout (table_name)
+      POST /api/v2/admin/reset (table_name)
+      GET  /api/v2/admin/secret-flag (要AdminセッションCookie)
+      POST /api/v2/admin/receipt (filename)
+      
+      [その他テスト用API]
+      GET  /api/v2/menu/search?q=  ※WAFテスト用。
+      POST /api/v2/orders/preview  ※数量のマイナス値テスト
+    -->
+
     <script src="app.js"></script>
 </body>
 </html>
