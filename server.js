@@ -74,8 +74,27 @@ app.get('/api/v2/r/session-data', authenticateToken, async (c) => {
 
 // 3. GET /api/v2/menu/list
 app.get('/api/v2/menu/list', authenticateToken, async (c) => {
-    const { results } = await c.env.DB.prepare('SELECT * FROM menu_items').all();
+    const { results } = await c.env.DB.prepare('SELECT * FROM menu_items WHERE is_hidden = 0').all();
     return c.json({ status: 'ok', data: results });
+});
+
+// 3.5 GET /api/v2/menu/search (Hidden API for SQLi and WAF Bypass)
+app.get('/api/v2/menu/search', async (c) => {
+    const q = c.req.query('q') || '';
+    
+    // WAF Simulator (Blocks obvious "flag" keyword)
+    if (q.toLowerCase().includes('flag')) {
+        return c.html(`<h3>WAF Error: '<script>alert("Blocked")</script>' The word 'flag' is prohibited.</h3>`, 403);
+    }
+
+    try {
+        // Vulnerable to SQL Injection (Direct concatenation instead of binding)
+        const query = `SELECT * FROM menu_items WHERE name LIKE '%${q}%' AND is_hidden = 0`;
+        const { results } = await c.env.DB.prepare(query).all();
+        return c.json({ status: 'ok', data: results });
+    } catch (err) {
+        return c.json({ error: 'Database Error' }, 500);
+    }
 });
 
 // 4. POST /api/v2/orders (Customer creates order)
@@ -164,6 +183,67 @@ app.get('/api/v2/table/status', authenticateToken, async (c) => {
     if (!table) return c.json({ error: 'Table not found' }, 404);
     
     return c.json({ status: 'ok', data: { status: table.status } });
+});
+
+// 9. POST /api/v2/orders/preview (Logic Flaw / Negative Order Simulator)
+app.post('/api/v2/orders/preview', authenticateToken, async (c) => {
+    const { items } = await c.req.json(); // ex: [{menu_item_id: 1, quantity: -5}]
+    let total = 0;
+    
+    if (!Array.isArray(items)) return c.json({ error: 'Invalid items format' }, 400);
+
+    for (let item of items) {
+        const menuItem = await c.env.DB.prepare('SELECT price FROM menu_items WHERE id = ?').bind(item.menu_item_id).first();
+        if (menuItem) {
+            total += menuItem.price * item.quantity;
+        }
+    }
+    
+    if (total < 0) {
+        return c.json({ status: 'ok', total, flag: 'GDGoC{N3g4t1v3_B1ll_H4ck3r}' });
+    }
+    return c.json({ status: 'ok', total });
+});
+
+// 10. GET /api/v2/error (Reflected XSS)
+app.get('/api/v2/error', (c) => {
+    const msg = c.req.query('msg') || 'Unknown error occurred.';
+    // Vulnerable to XSS (No HTML escaping)
+    return c.html(`
+        <html>
+            <head><title>Error</title></head>
+            <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+                <h2 style="color: red;">⚠ System Error</h2>
+                <p>Details: ${msg}</p>
+                <a href="/">Return to Home</a>
+            </body>
+        </html>
+    `);
+});
+
+// 11. GET /api/v2/admin/secret-flag (Admin API for HttpOnly XSS Fetching)
+app.get('/api/v2/admin/secret-flag', (c) => {
+    const cookie = c.req.header('cookie');
+    if (cookie && cookie.includes('admin_session=')) {
+        return c.json({ status: 'ok', flag: "GDGoC{XSS_t0_Http0nly_Byp4ss_M4st3r}" });
+    }
+    return c.json({ error: 'Unauthorized. Admin cookie required.' }, 401);
+});
+
+// 12. POST /api/v2/admin/receipt (OS Command Injection Simulator)
+app.post('/api/v2/admin/receipt', async (c) => {
+    const { filename } = await c.req.json();
+    
+    if (!filename) return c.json({ error: 'Filename is required' }, 400);
+
+    // Safe simulation of OS Command Injection
+    if (filename.includes(';') && filename.includes('cat ') && filename.includes('flag')) {
+         return c.json({ status: 'ok', output: 'GDGoC{0S_C0mm4nd_1nj3ct10n_Pwn3d}' });
+    } else if (filename.includes('%00')) {
+         return c.json({ status: 'ok', output: 'Error: Cannot open file. GDGoC{Null_Byt3_P01s0n1ng_M4st3r}' });
+    }
+    
+    return c.json({ status: 'ok', output: `Successfully generated PDF: ${filename}` });
 });
 
 export default app;
