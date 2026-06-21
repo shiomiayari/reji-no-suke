@@ -221,13 +221,19 @@ app.get('/api/v2/error', (c) => {
     `);
 });
 
-// 11. GET /api/v2/admin/secret-flag (Admin API for HttpOnly XSS Fetching)
-app.get('/api/v2/admin/secret-flag', (c) => {
-    const cookie = c.req.header('cookie');
-    if (cookie && cookie.includes('admin_session=')) {
-        return c.json({ status: 'ok', flag: "GDGoC{XSS_t0_Http0nly_Byp4ss_M4st3r}" });
+// 11. POST /api/v2/admin/verify-token (XSS LocalStorage Token Exfiltration Simulator)
+// 攻撃者の外部サーバー（Webhook等）をシミュレートしたエンドポイント。
+// 参加者がXSSを使ってLocalStorageのtokenを読み取り、ここにPOSTできればフラグ獲得。
+app.post('/api/v2/admin/verify-token', async (c) => {
+    try {
+        const body = await c.req.json();
+        if (body && body.token) {
+            return c.json({ status: 'ok', flag: "GDGoC{L0c4lSt0r4g3_T0k3n_H1j4ck3d}" });
+        }
+    } catch (e) {
+        // fallthrough
     }
-    return c.json({ error: 'Unauthorized. Admin cookie required.' }, 401);
+    return c.json({ error: 'Token not exfiltrated.' }, 400);
 });
 
 // 12. POST /api/v2/admin/receipt (OS Command Injection Simulator)
