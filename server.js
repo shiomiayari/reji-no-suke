@@ -72,6 +72,27 @@ app.get('/api/v2/r/session-data', authenticateToken, async (c) => {
     });
 });
 
+// 2.5 GET /api/v2/orders/history (New API for order history)
+app.get('/api/v2/orders/history', authenticateToken, async (c) => {
+    const user = c.get('user');
+    // Allow IDOR vulnerability testing (CTF context) by taking table_id from query if present
+    const queryTableId = c.req.query('table_id');
+    const targetTableId = queryTableId || user.table_id;
+    
+    const { results } = await c.env.DB.prepare(`
+        SELECT o.id, o.table_id, o.quantity, o.ordered_at, m.id as menu_item_id, m.name as menu_name, m.price
+        FROM orders o
+        JOIN menu_items m ON o.menu_item_id = m.id
+        WHERE o.table_id = ?
+        ORDER BY o.ordered_at DESC
+    `).bind(targetTableId).all();
+
+    return c.json({
+        status: 'ok',
+        data: results
+    });
+});
+
 // 3. GET /api/v2/menu/list
 app.get('/api/v2/menu/list', authenticateToken, async (c) => {
     const { results } = await c.env.DB.prepare('SELECT * FROM menu_items WHERE is_hidden = 0').all();
@@ -114,16 +135,17 @@ app.post('/api/v2/orders', authenticateToken, async (c) => {
 
     const timestamp = new Date().toISOString();
 
-    await c.env.DB.prepare('INSERT INTO orders (table_id, menu_item_id, quantity, ordered_at) VALUES (?, ?, ?, ?)')
-        .bind(table_name, menu_item_id, quantity, timestamp)
-        .run();
+    // DB書き込みをモック化（他のCTF参加者に影響を出さないため）
+    // await c.env.DB.prepare('INSERT INTO orders (table_id, menu_item_id, quantity, ordered_at) VALUES (?, ?, ?, ?)')
+    //     .bind(table_name, menu_item_id, quantity, timestamp)
+    //     .run();
 
     return c.json({ status: 'ok', message: 'ご注文を承りました！' });
 });
 
 
-// 6. GET /api/v2/admin/tables
-app.get('/api/v2/admin/tables', async (c) => {
+// 6. GET /api/v2/tables
+app.get('/api/v2/tables', authenticateToken, async (c) => {
     const { results: tables } = await c.env.DB.prepare('SELECT * FROM tables').all();
     const { results: orders } = await c.env.DB.prepare(`
         SELECT o.table_id, m.price, o.quantity
@@ -144,32 +166,34 @@ app.get('/api/v2/admin/tables', async (c) => {
     return c.json({ status: 'ok', data: result });
 });
 
-// 7. POST /api/v2/admin/checkout
-app.post('/api/v2/admin/checkout', async (c) => {
+// 7. POST /api/v2/checkout
+app.post('/api/v2/checkout', async (c) => {
     const { table_name } = await c.req.json();
     if (!table_name) return c.json({ error: 'Missing table_name' }, 400);
     
-    await c.env.DB.prepare('UPDATE tables SET status = ? WHERE name = ?')
-        .bind('checked_out', table_name)
-        .run();
+    // DB書き込みをモック化（他のCTF参加者に影響を出さないため）
+    // await c.env.DB.prepare('UPDATE tables SET status = ? WHERE name = ?')
+    //     .bind('checked_out', table_name)
+    //     .run();
         
     return c.json({ status: 'ok', message: '会計処理が完了しました' });
 });
 
-// 7.5 POST /api/v2/admin/reset
-app.post('/api/v2/admin/reset', async (c) => {
+// 7.5 POST /api/v2/reset
+app.post('/api/v2/reset', async (c) => {
     const { table_name } = await c.req.json();
     if (!table_name) return c.json({ error: 'Missing table_name' }, 400);
     
+    // DB書き込みをモック化（他のCTF参加者に影響を出さないため）
     // Reset status to active
-    await c.env.DB.prepare('UPDATE tables SET status = ? WHERE name = ?')
-        .bind('active', table_name)
-        .run();
+    // await c.env.DB.prepare('UPDATE tables SET status = ? WHERE name = ?')
+    //     .bind('active', table_name)
+    //     .run();
         
     // Clear all past orders for this table so total is ¥0
-    await c.env.DB.prepare('DELETE FROM orders WHERE table_id = ?')
-        .bind(table_name)
-        .run();
+    // await c.env.DB.prepare('DELETE FROM orders WHERE table_id = ?')
+    //     .bind(table_name)
+    //     .run();
         
     return c.json({ status: 'ok', message: '卓をリセットしました' });
 });
@@ -221,10 +245,10 @@ app.get('/api/v2/error', (c) => {
     `);
 });
 
-// 11. POST /api/v2/admin/verify-token (XSS LocalStorage Token Exfiltration Simulator)
+// 11. POST /api/v2/verify-token (XSS LocalStorage Token Exfiltration Simulator)
 // 攻撃者の外部サーバー（Webhook等）をシミュレートしたエンドポイント。
 // 参加者がXSSを使ってLocalStorageのtokenを読み取り、ここにPOSTできればフラグ獲得。
-app.post('/api/v2/admin/verify-token', async (c) => {
+app.post('/api/v2/verify-token', async (c) => {
     try {
         const body = await c.req.json();
         if (body && body.token) {
@@ -236,8 +260,8 @@ app.post('/api/v2/admin/verify-token', async (c) => {
     return c.json({ error: 'Token not exfiltrated.' }, 400);
 });
 
-// 12. POST /api/v2/admin/receipt (OS Command Injection Simulator)
-app.post('/api/v2/admin/receipt', async (c) => {
+// 12. POST /api/v2/receipt (OS Command Injection Simulator)
+app.post('/api/v2/receipt', async (c) => {
     const { filename } = await c.req.json();
     
     if (!filename) return c.json({ error: 'Filename is required' }, 400);

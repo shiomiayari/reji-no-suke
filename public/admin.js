@@ -1,4 +1,5 @@
 const API_BASE = '/api/v2';
+const getAdminToken = () => localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadTables();
@@ -9,7 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadTables() {
     try {
-        const res = await fetch(`${API_BASE}/admin/tables?t=${Date.now()}`);
+        const res = await fetch(`${API_BASE}/tables?t=${Date.now()}`, {
+            headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+        });
         const data = await res.json();
 
         if (data.status === 'ok') {
@@ -74,7 +77,7 @@ async function resetTable(tableName) {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/admin/reset`, {
+        const res = await fetch(`${API_BASE}/reset`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ table_name: tableName })
@@ -98,7 +101,7 @@ async function checkout(tableName) {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/admin/checkout`, {
+        const res = await fetch(`${API_BASE}/checkout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ table_name: tableName })
@@ -121,7 +124,7 @@ async function downloadReceipt(tableName) {
     if (!filename) return;
 
     try {
-        const res = await fetch(`${API_BASE}/admin/receipt`, {
+        const res = await fetch(`${API_BASE}/receipt`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename })
@@ -133,5 +136,3 @@ async function downloadReceipt(tableName) {
     }
 }
 
-// TODO: 管理者専用のメモAPI（現在はコンソールでのみ確認可能。後でUIを作る）
-// fetch('/api/v2/admin/secret-flag').then(res => res.json()).then(console.log);

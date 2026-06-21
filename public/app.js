@@ -8,6 +8,19 @@ const API_BASE = '/api/v2';
 //     console.log(data);
 // }
 
+// TODO: 開発チームへの引き継ぎメモ
+// 全卓の利用状況と売上合計を一覧取得するAPI（ /api/v2/tables ）に認証（authenticateToken）を追加しました！
+// 現状は一般顧客のトークンでもアクセスできてしまう（BOLAの脆弱性がある）状態なので、
+// 本番リリースまでには必ず admin 権限のチェック（role === 'admin'）を入れるように修正してください！
+// async function testFetchAllTables() {
+//     const token = localStorage.getItem('token');
+//     const res = await fetch(`${API_BASE}/tables`, {
+//         headers: { 'Authorization': `Bearer ${token}` }
+//     });
+//     const data = await res.json();
+//     console.log(data);
+// }
+
 function parseJwt(token) {
     try {
         return JSON.parse(atob(token.split('.')[1]));
@@ -323,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Load History
         function loadHistory() {
-            fetch(`${API_BASE}/r/session-data`, {
+            fetch(`${API_BASE}/orders/history`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             .then(res => res.json())
